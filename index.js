@@ -2,6 +2,8 @@ const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,6 +16,25 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cookieParser());
+
+const logger = async (req, res, next) => {
+  console.log("called", req.hostname, req.originalUrl);
+  next();
+};
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  jwt.verify(token, process.env.JWT_ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.05pkqvm.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -36,6 +57,28 @@ async function run() {
     const appliedJobCollection = client
       .db("jobDatabase")
       .collection("appliedJobs");
+
+    // user auth api
+    app.post("/api/v1/auth/jwt", logger, async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JWT_ACCESS_TOKEN, {
+        expiresIn: "1h",
+      });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: false,
+          // sameSite: "strict",
+        })
+
+        .send({ success: true });
+    });
+
+    app.post("/api/v1/auth/logout", async (req, res) => {
+      const user = req.body;
+      console.log("logged out user", user);
+      res.clearCookie("token", { maxAge: 0 }).send({ success: true });
+    });
 
     app.get("/api/v1/categories", async (req, res) => {
       const result = await categoryCollection.find().toArray();
