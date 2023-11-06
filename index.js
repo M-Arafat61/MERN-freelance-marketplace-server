@@ -95,6 +95,11 @@ async function run() {
       const result = await jobCollection.find().toArray();
       res.send(result);
     });
+    app.get("/api/v1/jobs", async (req, res) => {
+      const query = req.user.email;
+      const result = await jobCollection.find(query).toArray();
+      res.send(result);
+    });
 
     app.get("/api/v1/jobs/:id", async (req, res) => {
       const id = req.params.id;
