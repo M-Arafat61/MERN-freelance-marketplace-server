@@ -128,6 +128,27 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/api/v1/updateJob/:jobId", async (req, res) => {
+      const id = req.params.jobId;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedProduct = req.body;
+
+      const updateDoc = {
+        $set: {
+          email: updatedProduct.email,
+          title: updatedProduct.title,
+          deadline: updatedProduct.deadline,
+          description: updatedProduct.description,
+          minimumPrice: updatedProduct.minimumPrice,
+          maximumPrice: updatedProduct.maximumPrice,
+          category: updatedProduct.category,
+        },
+      };
+
+      const result = await jobCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+    });
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment to MongoDB!");
   } finally {
