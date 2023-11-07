@@ -149,6 +149,13 @@ async function run() {
       const result = await jobCollection.updateOne(filter, updateDoc, options);
       res.send(result);
     });
+
+    app.delete("/api/v1/deleteJob/:jobId", async (req, res) => {
+      const id = req.params.jobId;
+      const query = { _id: new ObjectId(id) };
+      const result = await jobCollection.deleteOne(query);
+      res.send(result);
+    });
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment to MongoDB!");
   } finally {
