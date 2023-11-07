@@ -188,6 +188,18 @@ async function run() {
       const result = await appliedJobCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
+    app.patch("/api/v1/statusComplete/:bidId", async (req, res) => {
+      const id = req.params.bidId;
+      const filter = { _id: new ObjectId(id) };
+      const updateBidCompletion = req.body;
+      const updateDoc = {
+        $set: {
+          status: updateBidCompletion.status,
+        },
+      };
+      const result = await appliedJobCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
 
     app.delete("/api/v1/deleteJob/:jobId", async (req, res) => {
       const id = req.params.jobId;
