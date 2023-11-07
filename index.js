@@ -96,8 +96,6 @@ async function run() {
       res.send(result);
     });
     app.get("/api/v1/myPostedJobs", logger, verifyToken, async (req, res) => {
-      console.log(req.query.email);
-      console.log("token owner info", req.user);
       if (req.user.email !== req.query.email) {
         return res.status(403).send({ message: "forbidden access" });
       }
@@ -106,6 +104,18 @@ async function run() {
         query = { email: req.query.email };
       }
       const result = await jobCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/api/v1/bidRequests", logger, verifyToken, async (req, res) => {
+      if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      let query = {};
+
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+      const result = await appliedJobCollection.find(query).toArray();
       res.send(result);
     });
     app.get("/api/v1/myBids", async (req, res) => {
