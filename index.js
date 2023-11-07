@@ -146,21 +146,46 @@ async function run() {
       const id = req.params.jobId;
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
-      const updatedProduct = req.body;
+      const updatedJob = req.body;
 
       const updateDoc = {
         $set: {
-          email: updatedProduct.email,
-          title: updatedProduct.title,
-          deadline: updatedProduct.deadline,
-          description: updatedProduct.description,
-          minimumPrice: updatedProduct.minimumPrice,
-          maximumPrice: updatedProduct.maximumPrice,
-          category: updatedProduct.category,
+          email: updatedJob.email,
+          title: updatedJob.title,
+          deadline: updatedJob.deadline,
+          description: updatedJob.description,
+          minimumPrice: updatedJob.minimumPrice,
+          maximumPrice: updatedJob.maximumPrice,
+          category: updatedJob.category,
         },
       };
 
       const result = await jobCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+    });
+
+    app.patch("/api/v1/statusReject/:bidId", async (req, res) => {
+      const id = req.params.bidId;
+      const filter = { _id: new ObjectId(id) };
+      const updatedBidRequest = req.body;
+      const updateDoc = {
+        $set: {
+          status: updatedBidRequest.status,
+        },
+      };
+      const result = await appliedJobCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+    app.patch("/api/v1/statusAccept/:bidId", async (req, res) => {
+      const id = req.params.bidId;
+      const filter = { _id: new ObjectId(id) };
+      const updatedBidRequest = req.body;
+      const updateDoc = {
+        $set: {
+          status: updatedBidRequest.status,
+        },
+      };
+      const result = await appliedJobCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
