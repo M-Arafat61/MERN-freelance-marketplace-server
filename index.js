@@ -108,6 +108,10 @@ async function run() {
       const result = await jobCollection.find(query).toArray();
       res.send(result);
     });
+    app.get("/api/v1/myBids", async (req, res) => {
+      const result = await appliedJobCollection.find().toArray();
+      res.send(result);
+    });
 
     app.get("/api/v1/jobs/:id", async (req, res) => {
       const id = req.params.id;
