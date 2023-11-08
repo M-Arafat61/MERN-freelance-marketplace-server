@@ -91,6 +91,7 @@ async function run() {
       res.send(result);
     });
 
+    // read apis
     app.get("/api/v1/jobs", async (req, res) => {
       const result = await jobCollection.find().toArray();
       res.send(result);
@@ -120,30 +121,60 @@ async function run() {
       const result = await appliedJobCollection.find(query).toArray();
       res.send(result);
     });
+
     app.get("/api/v1/myBids", logger, verifyToken, async (req, res) => {
-      console.log(req.user.email);
-      console.log(req.query.email);
-      if (req.user.email !== req.query.email) {
+      const email = req.query.email;
+      if (req.user.email !== email) {
         return res.status(403).send({ message: "forbidden access" });
       }
-      let query = {};
+      const status = req.query.status;
+      const sort = req.query.sort;
+      let query = { email: email };
 
-      if (req.query?.email) {
-        query = { email: req.query.email };
+      if (status === "pending") {
+        query.$or = [{ status: { $exists: false } }, { status: "pending" }];
+      } else if (status && status !== "all") {
+        query.status = status;
       }
 
-      const result = await appliedJobCollection.find(query).toArray();
+      let result = await appliedJobCollection.find(query).toArray();
+
+      if (sort === "asc") {
+        result.sort((a, b) => {
+          if (a.status && b.status) {
+            return a.status.localeCompare(b.status);
+          } else if (!a.status) {
+            return 1;
+          } else if (!b.status) {
+            return -1;
+          }
+          return 0;
+        });
+      } else if (sort === "desc") {
+        result.sort((a, b) => {
+          if (a.status && b.status) {
+            return b.status.localeCompare(a.status);
+          } else if (!a.status) {
+            return -1;
+          } else if (!b.status) {
+            return 1;
+          }
+          return 0;
+        });
+      }
+
       res.send(result);
     });
 
-    app.get("/api/v1/jobs/:id", async (req, res) => {
+    app.get("/api/v1/jobs/:id", logger, verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await jobCollection.findOne(query);
       res.send(result);
     });
 
-    app.post("/api/v1/addJobs", async (req, res) => {
+    // create apis
+    app.post("/api/v1/addJobs", logger, verifyToken, async (req, res) => {
       const newJob = req.body;
       const result = await jobCollection.insertOne(newJob);
       res.send(result);
@@ -155,6 +186,7 @@ async function run() {
       res.send(result);
     });
 
+    // update apis
     app.patch("/api/v1/updateJob/:jobId", async (req, res) => {
       const id = req.params.jobId;
       const filter = { _id: new ObjectId(id) };
@@ -214,6 +246,7 @@ async function run() {
       res.send(result);
     });
 
+    // delete api
     app.delete("/api/v1/deleteJob/:jobId", async (req, res) => {
       const id = req.params.jobId;
       const query = { _id: new ObjectId(id) };
