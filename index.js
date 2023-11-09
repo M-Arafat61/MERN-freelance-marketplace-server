@@ -12,7 +12,6 @@ const port = process.env.PORT || 5000;
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
       "https://dream-tech-jobs.web.app",
       " https://dream-tech-jobs.firebaseapp.com",
     ],
@@ -21,6 +20,8 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.05pkqvm.mongodb.net/?retryWrites=true&w=majority`;
 
 const logger = async (req, res, next) => {
   console.log("called", req.hostname, req.originalUrl);
@@ -39,8 +40,6 @@ const verifyToken = async (req, res, next) => {
     next();
   });
 };
-
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.05pkqvm.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -72,7 +71,9 @@ async function run() {
         .cookie("token", token, {
           httpOnly: true,
           secure: true,
-          // sameSite: "none",
+          sameSite: "none",
+          // secure: false,
+          // sameSite: "strict",
         })
         .send({ success: true });
     });
