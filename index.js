@@ -12,8 +12,9 @@ const port = process.env.PORT || 5000;
 app.use(
   cors({
     origin: [
-      "https://dream-tech-jobs.web.app",
-      " https://dream-tech-jobs.firebaseapp.com",
+      // "https://dream-tech-jobs.web.app",
+      // "https://dream-tech-jobs.firebaseapp.com",
+      "http://localhost:5173",
     ],
     credentials: true,
   })
@@ -51,7 +52,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const categoryCollection = client
       .db("jobDatabase")
@@ -64,20 +65,24 @@ async function run() {
     // user auth api
     app.post("/api/v1/auth/jwt", logger, async (req, res) => {
       const user = req.body;
+      // console.log(user);
       const token = jwt.sign(user, process.env.JWT_ACCESS_TOKEN, {
         expiresIn: "1h",
       });
       res
         .cookie("token", token, {
           httpOnly: true,
-          secure: true,
-          sameSite: "none",
-          // secure: false,
-          // sameSite: "strict",
+          // secure: true,
+          // sameSite: "none",
+          secure: false,
+          sameSite: "strict",
         })
         .send({ success: true });
     });
 
+    //
+    //
+    // logout
     app.post("/api/v1/auth/logout", async (req, res) => {
       const user = req.body;
       console.log("logged out user", user);
@@ -100,9 +105,12 @@ async function run() {
       const result = await jobCollection.find().toArray();
       res.send(result);
     });
+
+    //
+    //
+    //
+    // posted jobs
     app.get("/api/v1/myPostedJobs", logger, verifyToken, async (req, res) => {
-      console.log(req.user.email);
-      console.log(req.query.email);
       if (req.user.email !== req.query.email) {
         return res.status(403).send({ message: "forbidden access" });
       }
@@ -113,6 +121,11 @@ async function run() {
       const result = await jobCollection.find(query).toArray();
       res.send(result);
     });
+
+    //
+    //
+    //
+    //
     app.get("/api/v1/bidRequests", logger, verifyToken, async (req, res) => {
       if (req.user.email !== req.query.email) {
         return res.status(403).send({ message: "forbidden access" });
@@ -126,47 +139,15 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/api/v1/myBids", logger, verifyToken, async (req, res) => {
-      const email = req.query.email;
-      if (req.user.email !== email) {
-        return res.status(403).send({ message: "forbidden access" });
-      }
-      const status = req.query.status;
-      const sort = req.query.sort;
-      let query = { email: email };
+    //
+    //
+    //
+    // My bids
 
-      if (status === "pending") {
-        query.$or = [{ status: { $exists: false } }, { status: "pending" }];
-      } else if (status && status !== "all") {
-        query.status = status;
-      }
-
-      let result = await appliedJobCollection.find(query).toArray();
-
-      if (sort === "asc") {
-        result.sort((a, b) => {
-          if (a.status && b.status) {
-            return a.status.localeCompare(b.status);
-          } else if (!a.status) {
-            return 1;
-          } else if (!b.status) {
-            return -1;
-          }
-          return 0;
-        });
-      } else if (sort === "desc") {
-        result.sort((a, b) => {
-          if (a.status && b.status) {
-            return b.status.localeCompare(a.status);
-          } else if (!a.status) {
-            return -1;
-          } else if (!b.status) {
-            return 1;
-          }
-          return 0;
-        });
-      }
-
+    app.get("/api/v1/myBids/:email", logger, verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const query = { userEmail: email };
+      const result = await appliedJobCollection.find(query).toArray();
       res.send(result);
     });
 
